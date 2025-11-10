@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../Services/authContext';
 import projectLogo from '../assets/project-sync-logo.jpeg';
 import trelloLeftImage from '../assets/trello-left.4f52d13c.svg';
 import trelloRightImage from '../assets/trello-right.e6e102c7.svg';
@@ -9,7 +8,6 @@ import Modal from '../Components/Common/Modal';
 import Spinner from '../Components/Common/Spinner';
 
 const Login = () => {
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -27,12 +25,8 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
-    if (serverError) {
-      setServerError('');
-    }
+    if (errors[name]) setErrors({ ...errors, [name]: '' });
+    if (serverError) setServerError('');
   };
 
   const validateForm = () => {
@@ -51,22 +45,37 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ Updated login with live backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
+
     if (validateForm()) {
       setIsLoading(true);
       try {
-        await login(formData);
-      } catch (error) {
-        console.error('Login error:', error);
-        if (error.message) {
-          setServerError(error.message);
-        } else if (typeof error === 'string') {
-          setServerError(error);
+        const response = await fetch(
+          `${process.env.REACT_APP_API_URL}/users/login`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.responseCode === 200) {
+          // Login successful
+          console.log('Login success:', result);
+          localStorage.setItem('userId', result.userId);
+          localStorage.setItem('role', result.role);
+          window.location.href = '/dashboard';
         } else {
-          setServerError('Invalid credentials. Please check your email and password.');
+          setServerError(result.message || 'Invalid credentials');
         }
+      } catch (err) {
+        console.error('Login error:', err);
+        setServerError('Network error. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -83,8 +92,7 @@ const Login = () => {
     }
     setForgotLoading(true);
     try {
-      // Call backend stub endpoint
-      const res = await fetch('/api/user/forgot-password', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/users/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail }),
@@ -106,7 +114,6 @@ const Login = () => {
     <>
       <Navbar />
       <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden pt-16 md:pt-0">
-        {/* Decorative Trello Images */}
         <img
           src={trelloLeftImage}
           alt="Trello Left"
@@ -119,8 +126,6 @@ const Login = () => {
           className="hidden md:block absolute right-0 top-1/2 transform -translate-y-1/2 w-64 opacity-30 z-0 pointer-events-none"
           style={{ maxHeight: '80vh' }}
         />
-
-        {/* Center login form */}
         <div className="relative z-10 max-w-md w-full mx-8 my-20">
           <div className="bg-white rounded-2xl shadow-2xl px-10 py-10 flex flex-col items-center">
             <img
@@ -140,9 +145,7 @@ const Login = () => {
             )}
             <form className="w-full space-y-5" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-blue-700 mb-1">
-                  Email address
-                </label>
+                <label htmlFor="email" className="block text-sm font-medium text-blue-700 mb-1">Email address</label>
                 <input
                   id="email"
                   name="email"
@@ -156,9 +159,7 @@ const Login = () => {
                 {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-blue-700 mb-1">
-                  Password
-                </label>
+                <label htmlFor="password" className="block text-sm font-medium text-blue-700 mb-1">Password</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -189,9 +190,7 @@ const Login = () => {
                     type="checkbox"
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    Remember me
-                  </label>
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Remember me</label>
                 </div>
                 <div className="text-sm">
                   <button
@@ -210,8 +209,6 @@ const Login = () => {
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </button>
-              
-              {/* Signup button */}
               <div className="mt-4">
                 <Link
                   to="/signup"
