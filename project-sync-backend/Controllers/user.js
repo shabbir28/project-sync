@@ -6,7 +6,7 @@ const Team = require('../Models/team')
 const DeveloperTeam = require('../Models/developer_team')
 const Project = require('../Models/project')
 const Task = require('../Models/task')
-const Bug = require('../Models/Bug')
+const Bug = require('../Models/bug')
 const crypto = require('crypto');
 
 // Sign Up
