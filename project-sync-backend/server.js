@@ -43,8 +43,8 @@ app.get('/', (req, res) => {
 
 connectToMongoDB().then(() => {
     app.listen(port, () => {
-        console.log(`🚀 Server running at http://localhost:${port}`);
+        console.log(`Server running at http://localhost:${port}`);
     });
 }).catch(err => {
-    console.error("❌ Failed to start server due to DB error.");
+    console.error("Failed to start server due to DB error.");
 });
