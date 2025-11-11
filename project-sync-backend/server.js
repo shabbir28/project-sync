@@ -18,21 +18,19 @@ app.use(cookieParser());
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://project-sync-one.vercel.app' // <-- Your Vercel frontend
+    'https://project-sync-one.vercel.app'
 ];
 
 const corsOptions = {
     origin: function(origin, callback) {
-        // allow requests with no origin (like mobile apps or Postman)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-            return callback(new Error(msg), false);
+            return callback(new Error(`CORS not allowed from origin: ${origin}`), false);
         }
         return callback(null, true);
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','Accept'],
     exposedHeaders: ['Set-Cookie'],
     credentials: true,
     optionsSuccessStatus: 200
@@ -50,21 +48,10 @@ app.use('/client', require('./Routes/client'));
 app.use('/bug', require('./Routes/bug'));
 
 // Test routes
-app.get('/test', (req, res) => {
-    res.send('Test route is working!');
-});
+app.get('/test', (req, res) => res.send('Test route is working!'));
+app.get('/', (req, res) => res.send('Hello World!'));
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
-
-// Connect to MongoDB and start server
+// Connect to DB and start server
 connectToMongoDB()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Server running at http://localhost:${port}`);
-        });
-    })
-    .catch(err => {
-        console.error("Failed to start server due to DB error.", err);
-    });
+    .then(() => app.listen(port, () => console.log(`Server running at http://localhost:${port}`)))
+    .catch(err => console.error("DB connection error:", err));
