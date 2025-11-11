@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../Models/user');
 const { userJwtSecret } = require('../config');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // ------------------- Signup -------------------
 router.post('/signup', async (req, res) => {
     try {
@@ -28,11 +30,12 @@ router.post('/signup', async (req, res) => {
         // Set cookie
         res.cookie('userToken', token, {
             httpOnly: true,
-            secure: true,       // HTTPS only
-            sameSite: 'none',   // allow cross-site
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             maxAge: 24*60*60*1000
         });
 
+        console.log('Signup successful:', newUser.email);
         res.status(200).json({ status: 'SUCCESS', message: 'Signup successful', user: newUser });
     } catch (err) {
         console.error('Signup error:', err);
@@ -57,11 +60,12 @@ router.post('/login', async (req, res) => {
         // Set cookie
         res.cookie('userToken', token, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             maxAge: 24*60*60*1000
         });
 
+        console.log('Login successful:', user.email);
         res.status(200).json({ status: 'SUCCESS', message: 'Login successful', user });
     } catch (err) {
         console.error('Login error:', err);
@@ -73,6 +77,7 @@ router.post('/login', async (req, res) => {
 router.post('/logout', (req, res) => {
     try {
         res.clearCookie('userToken');
+        console.log('User logged out');
         res.status(200).json({ status: 'SUCCESS', message: 'Logged out successfully' });
     } catch (err) {
         console.error('Logout error:', err);
